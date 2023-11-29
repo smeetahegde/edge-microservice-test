@@ -1,0 +1,46 @@
+package ucoreManager
+
+import (
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+)
+
+const bootstrapImageName = "edge_bootstrap_server"
+const bootstrapImageTag = "1.690"
+
+// RegistryBase is registry to use.
+var RegistryBase = "registry.dac.nokia.com"
+
+var (
+	installImageBase = "/public/talos/installer-nokia:"
+
+	// BuildVersion is set to the version of the building component by ldflags.
+	BuildVersion = ""
+)
+
+
+func kubeproxyImage() string {
+	return RegistryBase + "/k8s/kube-proxy:"
+}
+
+// KubeproxyImageVersion gets the kube proxy image version.
+func KubeproxyImageVersion() string {
+	return kubeproxyImage() + controlPlaneVersion
+}
+
+func GetHwMonitorImage() string {
+	return RegistryBase + "/bootstrap/hardware-watchdog:" + GetHwMonitorTag()
+}
+
+func GetHwMonitorTag() string {
+	return "1.24"
+}
+
+
+const (
+	// InstallImageTag is the desired Talos version.
+	InstallImageTag          = "v1.3.7-6ddcdefb"
+	InstallImageTagStableNIC = "v1.5.2-38f9ac93"
+	controlPlaneVersion      = "v1.26.9"
+)
+

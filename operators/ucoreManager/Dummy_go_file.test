@@ -1,0 +1,69 @@
+package ucoreManager
+
+import (
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+)
+
+func (r *SliceReconciler) newMcnToolsOperatorDeployment(version string, instance metav1.Object) *appsv1.Deployment {
+	ls := labelsForMcn(mcnToolOperator)
+	dep := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      mcnToolOperator,
+			Namespace: "default",
+		},
+		Spec: appsv1.DeploymentSpec{
+			Selector: &metav1.LabelSelector{
+				MatchLabels: ls,
+			},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: ls,
+				},
+				Spec: corev1.PodSpec{
+					ImagePullSecrets: []corev1.LocalObjectReference{
+						{Name: pullsecret},
+					},
+					ServiceAccountName: mcnToolOperator,
+					Containers: []corev1.Container{
+						{
+							ImagePullPolicy: corev1.PullIfNotPresent,
+							Name:            "operator",
+							Env: []corev1.EnvVar{
+								{
+									Name:  "OPERATOR_NAME",
+									Value: mcnToolOperator,
+								},
+								{
+									Name: "WATCH_NAMESPACE",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											APIVersion: "v1",
+											FieldPath:  "metadata.namespace",
+										},
+									},
+								},
+								{
+									Name: "POD_NAME",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											APIVersion: "v1",
+											FieldPath:  "metadata.name",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	err := controllerutil.SetControllerReference(instance, dep, r.Scheme)
+	if err != nil {
+		log.Error(err, "Failed to set controller for MCN-Tools deployment")
+	}
+
+	return dep
+}
